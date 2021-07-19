@@ -90,6 +90,27 @@ class EncoderToGamma(nn.Module):
 
 
 class VAE(nn.Module):
-    def __init__(self):
+    def __init__(self, vocab_size, hidden_size, num_topics, dropout, model_type):
         super().__init__()
-        pass
+        self.encoder = EncoderModule(vocab_size, hidden_size, dropout)
+        if model_type == 1:
+            self.encoder_to_dist = EncoderToLogNormal(hidden_size, num_topics)
+        elif model_type == 2:
+            self.encoder_to_dist = EncoderToDirichlet(hidden_size, num_topics)
+        elif model_type == 3:
+            self.encoder_to_dist = EncoderToWeibull(hidden_size, num_topics)
+        elif model_type == 4:
+            self.encoder_to_dist = EncoderToGamma(hidden_size, num_topics)
+        self.decoder = DecoderModule(vocab_size, num_topics, dropout)
+        
+    def forward(self, inputs):
+        encoder_output = self.encoder(inputs)
+        dist = self.encoder_to_dist(encoder_output)
+        if self.training:
+            dist_to_decoder = dist.rsample().to(inputs.device)
+        else:
+            dist_to_decoder = dist.mean.to(inputs.device)
+        dist_to_decoder = dist_to_decoder / dist_to_decoder.sum(1, keepdim=True)
+        reconstructed_documents = self.decoder(dist_to_decoder)
+        return reconstructed_documents
+        
