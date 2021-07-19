@@ -21,7 +21,7 @@ class EncoderModule(nn.Module):
         dropout_layer = self.drop(hidden_layer_three)
         return dropout_layer
 
-    
+
 class DecoderModule(nn.Module):
     def __init__(self, vocab_size, num_topics, dropout):
         super().__init__()
@@ -58,7 +58,7 @@ class EncoderToDirichlet(nn.Module):
         dist = Dirichlet(alpha)
         return dist
 
-    
+
 class EncoderToWeibull(nn.Module):
     def __init__(self, hidden_size, num_topics):
         super().__init__()
@@ -73,7 +73,7 @@ class EncoderToWeibull(nn.Module):
         dist = Weibull(lambda_, k)
         return dist
 
-    
+
 class EncoderToGamma(nn.Module):
     def __init__(self, hidden_size, num_topics):
         super().__init__()
