@@ -1,9 +1,7 @@
 import torch
-from torch.distributions.dirichlet import Dirichlet
-from torch.distributions.gamma import Gamma
-from torch.distributions.weibull import Weibull
 import torch.nn as nn
-from torch.distributions import LogNormal
+from torch.distributions import LogNormal, Dirichlet, Gamma, Weibull
+import torch.nn.functional as F
 from torch.distributions import kl_divergence
 
 class EncoderModule(nn.Module):
@@ -19,7 +17,7 @@ class EncoderModule(nn.Module):
         hidden_layer_one = activation(self.linear_layer_one(inputs))
         hidden_layer_two = activation(self.linear_layer_two(hidden_layer_one))
         hidden_layer_three = activation(self.linear_layer_three(hidden_layer_two))
-        dropout_layer = self.drop(hidden_layer_three)
+        dropout_layer = self.dropout(hidden_layer_three)
         return dropout_layer
 
 
@@ -27,10 +25,10 @@ class DecoderModule(nn.Module):
     def __init__(self, vocab_size, num_topics, dropout):
         super().__init__()
         self.topics_to_doc = nn.Linear(num_topics, vocab_size)
-        self.batch_normalization = nn.Linear(vocab_size)
+        self.batch_normalization = nn.BatchNorm1d(vocab_size)
         
     def forward(self, inputs):
-        return nn.LogSoftmax(self.batch_normalization(self.topics_to_doc(inputs)), dim=1)
+        return F.log_softmax(self.batch_normalization(self.topics_to_doc(inputs)), dim=1)
 
 
 class EncoderToLogNormal(nn.Module):
@@ -55,7 +53,7 @@ class EncoderToDirichlet(nn.Module):
         self.batch_norm_alpha = nn.BatchNorm1d(num_topics, affine=False)
     
     def forward(self, hidden):
-        alpha = self.batch_norm_alpha(self.linear_alpha(hidden))
+        alpha = self.batch_norm_alpha(self.linear_alpha(hidden)).exp().cpu()
         dist = Dirichlet(alpha)
         return dist
 

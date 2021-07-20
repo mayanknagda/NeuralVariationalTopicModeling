@@ -39,11 +39,13 @@ model = model.to(device)
 optim = torch.optim.Adam(model.parameters(), lr=lr)
 
 #  Making Folder for storing outputs
+'''
 path = os.getcwd()
 now = datetime.now()
 date_time = now.strftime("/outputs/%d_%m_%H_%M_%S") + dir_name
 path = path + date_time
 os.mkdir(path)
-
+'''
+path = 's'
 # Run, trainings
-beta, history, codes, model = fit(epochs, train_dl, val_dl, model, optim, device, path)
+history = fit(epochs, train_dl, val_dl, model, optim, device, path)
