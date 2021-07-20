@@ -11,7 +11,7 @@ params = {
     'hidden_size': [512, 256, 128], # Our VAE encoder has 3 layers, edit the hidden size of each layer you want it to be
     'num_topics': 30, # Number of topics you want to extract from the code
     'epochs': 100, # Total epochs you want to run your experiment on
-    'model_type': 2, # Type of model you want to use (LogNormal, Dirichlet, Weibull)
+    'model_type': 2, # Type of model you want to use (1 - LogNormal, 2 - Dirichlet, 3 - Weibull)
     'train_idx': 0, # Start training from the document number idx of the CSV
     'test_idx': 3000, # Include the last x documents in the CSV for testing
 }
