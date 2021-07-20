@@ -4,6 +4,7 @@ from torch.distributions.gamma import Gamma
 from torch.distributions.weibull import Weibull
 import torch.nn as nn
 from torch.distributions import LogNormal
+from torch.distributions import kl_divergence
 
 class EncoderModule(nn.Module):
     def __init__(self, vocab_size, hidden_size, dropout):
@@ -112,5 +113,23 @@ class VAE(nn.Module):
             dist_to_decoder = dist.mean.to(inputs.device)
         dist_to_decoder = dist_to_decoder / dist_to_decoder.sum(1, keepdim=True)
         reconstructed_documents = self.decoder(dist_to_decoder)
-        return reconstructed_documents
+        return reconstructed_documents, dist
+    
+    def loss(self, reconstructed, original, posterior): # We need to have NLL Loss as well KLD Loss
+        if isinstance(posterior, LogNormal):
+            loc = torch.zeros_like(posterior.loc)
+            scale = torch.ones_like(posterior.scale)        
+            prior = LogNormal(loc, scale)
+        elif isinstance(posterior, Dirichlet):
+            alphas = torch.ones_like(posterior.concentration)
+            prior = Dirichlet(alphas)
+        elif isinstance(posterior, Weibull):
+            pass
+            # standard weibull
+        elif isinstance(posterior, Gamma):
+            pass
+            # standard Gamma
+        NLL = - torch.sum(reconstructed*original)
+        KLD = torch.sum(kl_divergence(posterior, prior).to(reconstructed.device))
+        return NLL, KLD
         

@@ -24,10 +24,11 @@ num_topics = params['num_topics'] # Number of topics you want to extract from th
 epochs = params['epochs'] # Total epochs you want to run your experiment on
 model_type = params['model_type'] # Type of model you want to use (LogNormal, Dirichlet, Weibull)
 train_idx = params['train_idx'] # Start training from the document number idx of the CSV
-test_idx = params['test_idx'] # Include the last x documents in the CSV for testing
+test_idx = params['test_idx'] # Include the last x documents in the CSV for testing and validation (50-50)
+val_idx = int(test_idx/2) # Include the last x documents in the CSV for validation
 
 # Make the Data
-vocab, docs, train_dl, test_dl, bow, texts = text_data(filename=filename, train_idx=train_idx, test_idx=test_idx, batch_size=batch_size)
+vocab, docs, train_dl, val_dl, test_dl, bow, texts = text_data(filename=filename, train_idx=train_idx, test_idx=test_idx, val_idx=val_idx, batch_size=batch_size)
 vocab_size = docs.shape[1]
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.manual_seed(seed)
@@ -45,4 +46,4 @@ path = path + date_time
 os.mkdir(path)
 
 # Run, trainings
-beta, history, codes, model = fit(epochs, train_dl, test_dl, model, optim, device, path)
+beta, history, codes, model = fit(epochs, train_dl, val_dl, model, optim, device, path)

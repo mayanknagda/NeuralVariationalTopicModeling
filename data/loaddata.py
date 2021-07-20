@@ -7,7 +7,7 @@ import pandas as pd
     inputs: filename (str), train index (starting from document number of the CSV), test_idx (last x documents from the CSV), batch_size (batch size of documents while training)
     return: vocab: pandas DataFrame of vocab, docs: all the documents in the CSV in form of vectors, train_dl, test_dl: train and test DataLoader for PyTorch, bow: bag of words for each doc, texts:
 """
-def text_data(filename, train_idx, test_idx, batch_size):
+def text_data(filename, train_idx, test_idx, val_idx, batch_size):
     path = 'data/' + filename
     with open(path) as f:
         lines = f.read().splitlines()
@@ -21,7 +21,8 @@ def text_data(filename, train_idx, test_idx, batch_size):
     vocab = pd.DataFrame(columns=['word', 'index'])
     vocab['word'] = vectorizer.get_feature_names()
     vocab['index'] = vocab.index
-    train_docs, test_docs = docs[train_idx:], docs[-test_idx: -1]
+    train_docs, val_docs, test_docs = docs[train_idx:], docs[-test_idx: -val_idx], docs[-val_idx: -1]
     train_dl = DataLoader([[train_docs[i]] for i in range(len(train_docs))], shuffle=True, batch_size=batch_size)
+    val_dl = DataLoader([[val_docs[i]] for i in range(len(val_docs))], batch_size=batch_size)
     test_dl = DataLoader([[test_docs[i]] for i in range(len(test_docs))], batch_size=batch_size)
-    return vocab, docs, train_dl, test_dl, bow, texts
+    return vocab, docs, train_dl, val_dl, test_dl, bow, texts
