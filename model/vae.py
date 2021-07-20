@@ -119,7 +119,7 @@ class VAE(nn.Module):
             scale = torch.ones_like(posterior.scale)        
             prior = LogNormal(loc, scale)
         elif isinstance(posterior, Dirichlet):
-            alphas = torch.ones_like(posterior.concentration)
+            alphas = torch.ones_like(posterior.concentration) * 0.01
             prior = Dirichlet(alphas)
         elif isinstance(posterior, Weibull):
             pass
