@@ -9,13 +9,15 @@ from data.loaddata import text_data
 from model.vae import VAE
 from training import fit
 from config import params
+from visualization import plot
 
 # Import Params
 dir_name = params['dir_name'] # Name of directory for logging outputs in the output/ folder
 batch_size = params['batch_size'] # Batch size for traininig
 seed = params['seed'] # Seed to replicate the experiments
 lr = params['lr'] # Learining Rate used for training,
-weight_decay = params['weight_decay'] # Regularization parameter (if regularization is used in the optimizer function)
+weight_decay = params['weight_decay'] # Regularization parameter (if regularization is used in the optimizer function
+beta_for_vae = params['beta'] # beta for beta - VAE
 dropout = params['dropout'] # Dropout percentage (torch)
 optimizer = params['optimizer'] # Optimizer function
 filename = params['filename'] # Filename of the document in data/ you want to run the code on
@@ -34,18 +36,19 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.manual_seed(seed)
 
 # Declaring model and optimizer
-model = VAE(vocab_size, hidden_size, num_topics, dropout, model_type)
+model = VAE(vocab_size, hidden_size, num_topics, dropout, model_type, beta_for_vae)
 model = model.to(device)
 optim = torch.optim.Adam(model.parameters(), lr=lr)
 
 #  Making Folder for storing outputs
-'''
-path = os.getcwd()
 now = datetime.now()
-date_time = now.strftime("/outputs/%d_%m_%H_%M_%S") + dir_name
-path = path + date_time
+path = now.strftime("output/%d.%m.%y.%H.%M.%S.") + dir_name
 os.mkdir(path)
-'''
-path = 's'
+
 # Run, trainings
-history = fit(epochs, train_dl, val_dl, model, optim, device, path)
+beta, history = fit(epochs, train_dl, val_dl, model, optim, device, path)
+
+# Visualization
+plot(beta, vocab, path, num_topics)
+
+## To Be Continued...

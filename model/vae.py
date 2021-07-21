@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch.distributions import LogNormal, Dirichlet, Gamma, Weibull
+from torch.distributions import LogNormal, Dirichlet, Gamma, Laplace
 from torch.distributions import kl_divergence
 
 class EncoderModule(nn.Module):
@@ -14,17 +14,16 @@ class EncoderModule(nn.Module):
     def forward(self, inputs):
         activation = nn.LeakyReLU()
         hidden_layer_one = activation(self.linear_layer_one(inputs))
-        hidden_layer_two = activation(self.linear_layer_two(hidden_layer_one))
-        hidden_layer_three = activation(self.linear_layer_three(hidden_layer_two))
-        dropout_layer = self.dropout(hidden_layer_three)
-        return dropout_layer
+        hidden_layer_two = self.dropout(activation(self.linear_layer_two(hidden_layer_one)))
+        hidden_layer_three = self.dropout(activation(self.linear_layer_three(hidden_layer_two)))
+        return hidden_layer_three
 
 
 class DecoderModule(nn.Module):
     def __init__(self, vocab_size, num_topics, dropout):
         super().__init__()
         self.topics_to_doc = nn.Linear(num_topics, vocab_size)
-        self.batch_normalization = nn.BatchNorm1d(vocab_size)
+        self.batch_normalization = nn.BatchNorm1d(vocab_size, affine=False)
         
     def forward(self, inputs):
         log_softmax = nn.LogSoftmax(dim = 1)
@@ -41,7 +40,7 @@ class EncoderToLogNormal(nn.Module):
     
     def forward(self, hidden):
         mean = self.batch_norm_mean(self.linear_mean(hidden))
-        var = self.batch_norm_var(self.linear_var(hidden))
+        var = 0.5 * self.batch_norm_var(self.linear_var(hidden))
         dist = LogNormal(mean, var.exp())
         return dist
         
@@ -58,7 +57,7 @@ class EncoderToDirichlet(nn.Module):
         return dist
 
 
-class EncoderToWeibull(nn.Module):
+class EncoderToLaplace(nn.Module):
     def __init__(self, hidden_size, num_topics):
         super().__init__()
         self.linear_lambda = nn.Linear(hidden_size[2], num_topics)
@@ -67,9 +66,9 @@ class EncoderToWeibull(nn.Module):
         self.batch_norm_k = nn.BatchNorm1d(num_topics, affine=False)
     
     def forward(self, hidden):
-        lambda_ = self.batch_norm_lambda(self.linear_lambda(hidden))
-        k = self.batch_norm_k(self.linear_k(hidden))
-        dist = Weibull(lambda_, k)
+        loc = self.batch_norm_lambda(self.linear_lambda(hidden))
+        scale = 0.5 * self.batch_norm_k(self.linear_k(hidden))
+        dist = Laplace(loc, scale.exp())
         return dist
 
 
@@ -82,14 +81,14 @@ class EncoderToGamma(nn.Module):
         self.batch_norm_theta = nn.BatchNorm1d(num_topics, affine=False)
     
     def forward(self, hidden):
-        k = self.batch_norm_k(self.linear_k(hidden))
-        theta = self.batch_norm_theta(self.linear_theta(hidden))
-        dist = Gamma(k, theta)
+        k = 0.5 * self.batch_norm_k(self.linear_k(hidden))
+        theta = 0.5 * self.batch_norm_theta(self.linear_theta(hidden))
+        dist = Gamma(k.exp(), theta.exp())
         return dist
 
 
 class VAE(nn.Module):
-    def __init__(self, vocab_size, hidden_size, num_topics, dropout, model_type):
+    def __init__(self, vocab_size, hidden_size, num_topics, dropout, model_type, beta):
         super().__init__()
         self.encoder = EncoderModule(vocab_size, hidden_size, dropout)
         if model_type == 1:
@@ -97,10 +96,11 @@ class VAE(nn.Module):
         elif model_type == 2:
             self.encoder_to_dist = EncoderToDirichlet(hidden_size, num_topics)
         elif model_type == 3:
-            self.encoder_to_dist = EncoderToWeibull(hidden_size, num_topics)
+            self.encoder_to_dist = EncoderToLaplace(hidden_size, num_topics)
         elif model_type == 4:
             self.encoder_to_dist = EncoderToGamma(hidden_size, num_topics)
         self.decoder = DecoderModule(vocab_size, num_topics, dropout)
+        self.beta = beta
         
     def forward(self, inputs):
         encoder_output = self.encoder(inputs)
@@ -109,7 +109,8 @@ class VAE(nn.Module):
             dist_to_decoder = dist.rsample().to(inputs.device)
         else:
             dist_to_decoder = dist.mean.to(inputs.device)
-        dist_to_decoder = dist_to_decoder / dist_to_decoder.sum(1, keepdim=True)
+        softmax = nn.Softmax(dim = 1)
+        dist_to_decoder = softmax(dist_to_decoder)
         reconstructed_documents = self.decoder(dist_to_decoder)
         return reconstructed_documents, dist
     
@@ -121,13 +122,17 @@ class VAE(nn.Module):
         elif isinstance(posterior, Dirichlet):
             alphas = torch.ones_like(posterior.concentration) * 0.01
             prior = Dirichlet(alphas)
-        elif isinstance(posterior, Weibull):
-            pass
-            # standard weibull
+        elif isinstance(posterior, Laplace):
+            loc = torch.zeros_like(posterior.loc)
+            scale = torch.ones_like(posterior.scale)
+            prior = Laplace(loc, scale)
         elif isinstance(posterior, Gamma):
-            pass
-            # standard Gamma
+            concentration = torch.ones_like(posterior.concentration) * 9
+            rate = torch.ones_like(posterior.rate) * 0.5
+            prior = Gamma(concentration, rate)
+            
         NLL = - torch.sum(reconstructed*original)
         KLD = torch.sum(kl_divergence(posterior, prior).to(reconstructed.device))
-        return NLL, KLD
+        loss_for_training = NLL + self.beta * KLD
+        return NLL, KLD, loss_for_training
         

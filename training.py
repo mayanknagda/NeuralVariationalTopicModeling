@@ -13,9 +13,9 @@ def train_one_batch(batch, model, optim, device):
     docs = batch[0].to(torch.device(device))
     optim.zero_grad()
     out, posterior = model(docs)
-    nll, kld = model.loss(out, docs, posterior)
+    nll, kld, loss_for_training = model.loss(out, docs, posterior)
     loss = nll + kld
-    loss.backward()
+    loss_for_training.backward()
     optim.step()
     return loss.item(), nll.item(), kld.item()
 
@@ -31,7 +31,7 @@ def validate_one_epoch(val_dl, model, device):
 def validate_one_batch(batch, model, device):
     docs = batch[0].to(torch.device(device))
     out, posterior = model(docs)
-    nll, kld = model.loss(out, docs, posterior)
+    nll, kld, _ = model.loss(out, docs, posterior)
     loss = nll + kld
     return loss.item(), nll.item(), kld.item()
 
@@ -51,5 +51,5 @@ def fit(epochs, train_dl, val_dl, model, optim, device, path):
             }
         history.append(log)
         print(log)
-    #beta = model.
-    return history
+    beta = model.decoder.topics_to_doc.weight.cpu().detach().T
+    return beta, history
