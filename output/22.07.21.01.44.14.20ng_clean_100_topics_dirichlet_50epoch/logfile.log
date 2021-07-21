@@ -1,5 +1,0 @@
-2021-07-22 01:47:39,230 - ---Start Logging---
-2021-07-22 01:47:39,231 - Dataset: output/22.07.21.01.44.14.20ng_clean_100_topics_dirichlet_50epoch/logfile.log. Total Epochs: 2. Total Topics: 20. Model Type: 2. lr: 0.001. seed: 3.
-2021-07-22 01:47:39,231 - {'epoch': 1, 'train_loss': tensor(34154.5664), 'train_loss_nll': tensor(32274.9238), 'train_loss_kld': tensor(1879.6422), 'val_loss': tensor(38029.5273), 'val_loss_nll': tensor(34598.1367), 'val_loss_kld': tensor(3431.3870)}
-2021-07-22 01:47:39,233 - {'epoch': 2, 'train_loss': tensor(33148.7305), 'train_loss_nll': tensor(31273.5215), 'train_loss_kld': tensor(1875.2097), 'val_loss': tensor(35868.7500), 'val_loss_nll': tensor(34007.0312), 'val_loss_kld': tensor(1861.7166)}
-2021-07-22 01:47:39,236 - ---Stop Logging---

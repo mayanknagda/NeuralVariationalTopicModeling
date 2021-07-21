@@ -1,10 +1,8 @@
 # Import Libs and Packages
-import numpy as np
 import torch
 from datetime import datetime
 import os
 import logging
-from torch.distributions import LogNormal, Dirichlet, kl_divergence
 from data.loaddata import text_data
 from model.vae import VAE
 from training import fit
