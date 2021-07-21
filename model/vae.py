@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torch.distributions import LogNormal, Dirichlet, Gamma, Weibull
-import torch.nn.functional as F
 from torch.distributions import kl_divergence
 
 class EncoderModule(nn.Module):
@@ -28,7 +27,8 @@ class DecoderModule(nn.Module):
         self.batch_normalization = nn.BatchNorm1d(vocab_size)
         
     def forward(self, inputs):
-        return F.log_softmax(self.batch_normalization(self.topics_to_doc(inputs)), dim=1)
+        log_softmax = nn.LogSoftmax(dim = 1)
+        return log_softmax(self.batch_normalization(self.topics_to_doc(inputs)))
 
 
 class EncoderToLogNormal(nn.Module):
