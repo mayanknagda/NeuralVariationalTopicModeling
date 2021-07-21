@@ -51,4 +51,32 @@ beta, history = fit(epochs, train_dl, val_dl, model, optim, device, path)
 # Visualization
 plot(beta, vocab, path, num_topics)
 
+# Logging
+
+# Create a log file in the folder
+log_filename = path + '/logfile.log'
+open(log_filename[0:], 'a').close()
+
+# Gets or creates a logger
+logger = logging.getLogger(__name__)
+
+# set log level
+logger.setLevel(logging.INFO)
+
+# define file handler and set formatter
+file_handler = logging.FileHandler(log_filename[0:])
+formatter = logging.Formatter('%(asctime)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# add file handler to logger
+logger.addHandler(file_handler)
+logger.info('---Start Logging---')
+logger.info(
+    'Dataset: {}. Total Epochs: {}. Total Topics: {}. Model Type: {}. lr: {}. seed: {}.'.format(filename, epochs, num_topics, model_type, lr, seed))
+for hist in history:
+    logger.info(hist)
+logger.info('---Stop Logging---')
+logger.removeHandler(file_handler)
+del logger, file_handler
+
 ## To Be Continued...
