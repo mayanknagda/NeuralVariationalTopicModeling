@@ -24,4 +24,14 @@ Below are some of the results in form of word clouds with different settings (mo
 
 *Note: The results shown below are pre-mature since the model was only run for 20 epochs to demonstrate usability. Further hyperparameter and model tuning combined with longer runs can improve the results significantly.*
 
-![20ng_d](output/22.07.21.01.58.10.20ng_clean_20_topics_dirichlet_20epoch/wordclouds.png "20 News Group with Dirichlet Distribution as Prior")
+1. 20 News Group with Dirichlet Distribution as Prior
+![20ng_d](output/22.07.21.01.58.10.20ng_clean_20_topics_dirichlet_20epoch/wordclouds.png "20 News Group Dataset with Dirichlet Distribution as Prior")
+
+2. 20 News Group Dataset with Log-Normal Distribution as Prior
+![20ng_d](output/22.07.21.02.00.33.20ng_clean_20_topics_log_normal_20epoch/wordclouds.png "20 News Group with Log-Normal Distribution as Prior")
+
+3. Reuters 8 Dataset with Dirichlet Distribution as Prior
+![20ng_d](output/22.07.21.02.07.58.R8_clean_8_topics_Dirichlet_20epoch/wordclouds.png "Reuters 8 with Log-Normal Distribution as Prior")
+
+4. Wikipedia Corpus with Dirichlet Distribution as Prior
+![20ng_d](output/22.07.21.02.12.10.wiki_clean_52_topics_Dirichlet_20epoch/wordclouds.png "Wikipedia Corpus with Dirichlet Distribution as Prior")
